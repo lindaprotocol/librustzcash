@@ -1,0 +1,3 @@
+[submodule "blake2-rfc"]
+	path = blake2-rfc
+	url = https://github.com/lindaprotocol/blake2-rfc

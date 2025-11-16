@@ -1,3 +1,6 @@
+[net]
+git-fetch-with-cli = true
+
 [workspace]
 members = [
     "bellman",

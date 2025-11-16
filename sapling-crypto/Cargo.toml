@@ -1,3 +1,6 @@
+[net]
+git-fetch-with-cli = true
+
 [package]
 authors = ["Sean Bowe <sean@z.cash>"]
 description = "Cryptographic library for Zcash Sapling"
@@ -17,10 +20,9 @@ bellman = { path = "../bellman" }
 rand = "0.4"
 digest = "0.7"
 byteorder = "1"
-
-[dependencies.blake2-rfc]
-git = "https://github.com/gtank/blake2-rfc"
-rev = "7a5b5fc99ae483a0043db7547fb79a6fa44b88a9"
+blake2-rfc = { path = "../blake2-rfc" }
+blake2b_rfc = { path = "../blake2-rfc/blake2b", default-features = false }
+blake2s_rfc = { path = "../blake2-rfc/blake2s", default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.1"

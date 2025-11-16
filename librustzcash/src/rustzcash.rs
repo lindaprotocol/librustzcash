@@ -1,5 +1,6 @@
 extern crate bellman;
-extern crate blake2_rfc;
+extern crate blake2b_rfc;
+extern crate blake2s_rfc;
 extern crate byteorder;
 extern crate libc;
 extern crate pairing;
@@ -38,7 +39,8 @@ use bellman::groth16::{
     Proof,
 };
 
-use blake2_rfc::blake2s::Blake2s;
+///use blake2_rfc::blake2s::Blake2s;
+use blake2s_rfc::Params as Blake2sParams;
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
@@ -68,9 +70,13 @@ pub mod equihash;
 #[cfg(test)]
 mod tests;
 
+///lazy_static! {
+///    static ref JUBJUB: JubjubBls12 = { JubjubBls12::new() };
+///}
 lazy_static! {
-    static ref JUBJUB: JubjubBls12 = { JubjubBls12::new() };
+    static ref JUBJUB: JubjubBls12 = JubjubBls12::new();
 }
+
 
 static mut SAPLING_SPEND_VK: Option<PreparedVerifyingKey<Bls12>> = None;
 static mut SAPLING_OUTPUT_VK: Option<PreparedVerifyingKey<Bls12>> = None;
@@ -339,6 +345,27 @@ pub extern "system" fn librustzcash_nsk_to_nk(
     nk.write(&mut result[..]).expect("length is 32 bytes");
 }
 
+///#[no_mangle]
+///pub extern "system" fn librustzcash_crh_ivk(
+///    ak: *const [c_uchar; 32],
+///    nk: *const [c_uchar; 32],
+///    result: *mut [c_uchar; 32],
+///) {
+///    let ak = unsafe { &*ak };
+///    let nk = unsafe { &*nk };
+///
+///    let mut h = Blake2s::with_params(32, &[], &[], CRH_IVK_PERSONALIZATION);
+///    h.update(ak);
+///    h.update(nk);
+///    let mut h = h.finalize().as_ref().to_vec();
+///
+///    // Drop the last five bits, so it can be interpreted as a scalar.
+///    h[31] &= 0b0000_0111;
+///
+///    let result = unsafe { &mut *result };
+///
+///    result.copy_from_slice(&h);
+///}
 #[no_mangle]
 pub extern "system" fn librustzcash_crh_ivk(
     ak: *const [c_uchar; 32],
@@ -348,17 +375,20 @@ pub extern "system" fn librustzcash_crh_ivk(
     let ak = unsafe { &*ak };
     let nk = unsafe { &*nk };
 
-    let mut h = Blake2s::with_params(32, &[], &[], CRH_IVK_PERSONALIZATION);
+    let mut h = Blake2sParams::new()
+        .hash_length(32)
+        .personal(CRH_IVK_PERSONALIZATION)
+        .to_state();
     h.update(ak);
     h.update(nk);
-    let mut h = h.finalize().as_ref().to_vec();
+    let h_result = h.finalize();
+    let mut h_bytes = h_result.as_bytes().to_vec();
 
     // Drop the last five bits, so it can be interpreted as a scalar.
-    h[31] &= 0b0000_0111;
+    h_bytes[31] &= 0b0000_0111;
 
     let result = unsafe { &mut *result };
-
-    result.copy_from_slice(&h);
+    result.copy_from_slice(&h_bytes);
 }
 
 #[no_mangle]

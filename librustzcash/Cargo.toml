@@ -1,3 +1,6 @@
+[net]
+git-fetch-with-cli = true
+
 [package]
 name = "librustzcash"
 version = "0.1.0"
@@ -22,7 +25,6 @@ byteorder = "1"
 rand = "0.4"
 sapling-crypto = { path = "../sapling-crypto" }
 zip32 = { path = "../zip32" }
-
-[dependencies.blake2-rfc]
-git = "https://github.com/gtank/blake2-rfc"
-rev = "7a5b5fc99ae483a0043db7547fb79a6fa44b88a9"
+blake2-rfc = { path = "../blake2-rfc" }
+blake2b_rfc = { path = "../blake2-rfc/blake2b", default-features = false }
+blake2s_rfc = { path = "../blake2-rfc/blake2s", default-features = false }

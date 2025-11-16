@@ -1,3 +1,6 @@
+[net]
+git-fetch-with-cli = true
+
 [package]
 name = "zcash_primitives"
 version = "0.0.0"

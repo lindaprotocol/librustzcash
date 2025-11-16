@@ -8,7 +8,9 @@ use pairing::{
     PrimeField
 };
 
-use blake2_rfc::blake2s::Blake2s;
+///use blake2s_rfc::blake2s::Blake2s;
+///use blake2s_rfc::blake2s;
+use blake2s_rfc::Params as Blake2sParams;
 use constants;
 
 /// Produces a random point in the Jubjub curve.
@@ -25,7 +27,14 @@ pub fn group_hash<E: JubjubEngine>(
     // Check to see that scalar field is 255 bits
     assert!(E::Fr::NUM_BITS == 255);
 
-    let mut h = Blake2s::with_params(32, &[], &[], personalization);
+///    let mut h = blake2s::with_params(32, &[], &[], personalization);
+    use blake2s_rfc::Params as Blake2sParams;
+
+    let mut h = Blake2sParams::new()
+        .hash_length(32)
+        .personal(personalization)
+        .to_state();
+
     h.update(constants::GH_FIRST_BLOCK);
     h.update(tag);
     let h = h.finalize().as_ref().to_vec();

@@ -1,5 +1,5 @@
 extern crate aes;
-extern crate blake2_rfc;
+extern crate blake2b_rfc;
 extern crate byteorder;
 extern crate fpe;
 #[macro_use]
@@ -8,7 +8,8 @@ extern crate pairing;
 extern crate sapling_crypto;
 
 use aes::Aes256;
-use blake2_rfc::blake2b::{Blake2b, Blake2bResult};
+///use blake2_rfc::blake2b::{Blake2b, Blake2bResult};
+///use blake2b_rfc::Blake2b;
 use byteorder::{ByteOrder, LittleEndian, ReadBytesExt, WriteBytesExt};
 use fpe::ff1::{BinaryNumeralString, FF1};
 use pairing::{bls12_381::Bls12, Field, PrimeField, PrimeFieldRepr};
@@ -21,7 +22,8 @@ use sapling_crypto::{
 use std::io::{self, Read, Write};
 
 lazy_static! {
-    static ref JUBJUB: JubjubBls12 = { JubjubBls12::new() };
+///    static ref JUBJUB: JubjubBls12 = { JubjubBls12::new() };
+    static ref JUBJUB: JubjubBls12 = JubjubBls12::new();
 }
 
 pub const PRF_EXPAND_PERSONALIZATION: &'static [u8; 16] = b"Zcash_ExpandSeed";
@@ -31,12 +33,18 @@ pub const ZIP32_SAPLING_FVFP_PERSONALIZATION: &'static [u8; 16] = b"ZcashSapling
 // Sapling key components
 
 /// PRF^expand(sk, t) := BLAKE2b-512("Zcash_ExpandSeed", sk || t)
-fn prf_expand(sk: &[u8], t: &[u8]) -> Blake2bResult {
+///fn prf_expand(sk: &[u8], t: &[u8]) -> Blake2bResult {
+fn prf_expand(sk: &[u8], t: &[u8]) -> blake2b_rfc::Hash {
     prf_expand_vec(sk, &vec![t])
 }
 
-fn prf_expand_vec(sk: &[u8], ts: &[&[u8]]) -> Blake2bResult {
-    let mut h = Blake2b::with_params(64, &[], &[], PRF_EXPAND_PERSONALIZATION);
+///fn prf_expand_vec(sk: &[u8], ts: &[&[u8]]) -> Blake2bResult {
+fn prf_expand_vec(sk: &[u8], ts: &[&[u8]]) -> blake2b_rfc::Hash {
+///    let mut h = Blake2b::with_params(64, &[], &[], PRF_EXPAND_PERSONALIZATION);
+    let mut h = blake2b_rfc::Params::new()
+        .hash_length(64)
+        .personal(PRF_EXPAND_PERSONALIZATION)
+        .to_state();
     h.update(sk);
     for t in ts {
         h.update(t);
@@ -52,6 +60,7 @@ impl OutgoingViewingKey {
     fn derive_child(&self, i_l: &[u8]) -> Self {
         let mut ovk = [0u8; 32];
         ovk.copy_from_slice(&prf_expand_vec(i_l, &[&[0x15], &self.0]).as_bytes()[..32]);
+///        ovk.copy_from_slice(&prf_expand(sk, &[0x02]).as_bytes()[..32]);
         OutgoingViewingKey(ovk)
     }
 }
@@ -207,7 +216,11 @@ impl<E: JubjubEngine> FullViewingKey<E> {
     }
 
     fn fingerprint(&self) -> FVKFingerprint {
-        let mut h = Blake2b::with_params(32, &[], &[], ZIP32_SAPLING_FVFP_PERSONALIZATION);
+///        let mut h = Blake2b::with_params(32, &[], &[], ZIP32_SAPLING_FVFP_PERSONALIZATION);
+        let mut h = blake2b_rfc::Params::new()  // Changed to use Params
+            .hash_length(32)
+            .personal(ZIP32_SAPLING_FVFP_PERSONALIZATION)
+            .to_state();
         h.update(&self.to_bytes());
         let mut fvfp = [0u8; 32];
         fvfp.copy_from_slice(h.finalize().as_bytes());
@@ -401,7 +414,11 @@ impl std::fmt::Debug for ExtendedFullViewingKey {
 
 impl ExtendedSpendingKey {
     pub fn master(seed: &[u8]) -> Self {
-        let mut h = Blake2b::with_params(64, &[], &[], ZIP32_SAPLING_MASTER_PERSONALIZATION);
+///        let mut h = Blake2b::with_params(64, &[], &[], ZIP32_SAPLING_MASTER_PERSONALIZATION);
+        let mut h = blake2b_rfc::Params::new()  // Changed to use Params
+            .hash_length(64)
+            .personal(ZIP32_SAPLING_MASTER_PERSONALIZATION)
+            .to_state();
         h.update(seed);
         let i = h.finalize();
 
